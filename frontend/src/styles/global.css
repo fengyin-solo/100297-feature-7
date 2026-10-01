@@ -33,3 +33,41 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .link { border: none; background: none; color: var(--brand); cursor: pointer; padding: 0; }
 .page-foot { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted); }
 .error-text { color: #b42318; }
+.success-text { color: #067647; }
+
+/* 状态徽标：困人/运行状态在列表、详情、看板共用同一套配色 */
+.badge { display: inline-block; border-radius: 10px; padding: 1px 9px; font-size: 12px; line-height: 18px; white-space: nowrap; border: 1px solid transparent; }
+.badge.gray { background: #f1f5f9; color: #64748b; border-color: #e2e8f0; }
+.badge.green { background: #e7f6ec; color: #067647; border-color: #b7e0c5; }
+.badge.amber { background: #fdf3e3; color: #b54708; border-color: #f5d9a8; }
+.badge.red { background: #fdecec; color: #b42318; border-color: #f4c4c4; }
+.badge.blue { background: #e8f1fe; color: #1f6feb; border-color: #bcd3fb; }
+.missing-tag { display: inline-block; margin-left: 6px; border-radius: 4px; padding: 0 6px; font-size: 12px; line-height: 18px; background: #fdf3e3; color: #b54708; border: 1px dashed #e0a85c; cursor: help; }
+
+/* 困人救援抽屉：分段记录在右侧完成，关掉再开已填段落仍在 */
+.drawer-mask { position: fixed; inset: 0; background: rgba(15, 23, 42, .35); z-index: 20; }
+.drawer { position: fixed; top: 0; right: 0; width: 560px; max-width: 94vw; height: 100vh; background: #fff; z-index: 21; display: flex; flex-direction: column; box-shadow: -6px 0 18px rgba(15, 23, 42, .15); }
+.drawer-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.drawer-head h3 { margin: 0; font-size: 16px; }
+.drawer-body { flex: 1; overflow-y: auto; padding: 16px 18px; }
+.drawer-foot { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin: 10px 0 4px; }
+.info-grid dt { color: var(--muted); font-size: 12px; }
+.info-grid dd { margin: 2px 0 8px; font-size: 13px; }
+.stage { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+.stage.done { border-color: #b7e0c5; background: #f4fbf6; }
+.stage.active { border-color: #bcd3fb; background: #f6f9ff; }
+.stage.todo { opacity: .6; background: #fafbfc; }
+.stage-title { display: flex; justify-content: space-between; align-items: center; font-weight: 600; margin-bottom: 8px; }
+.stage-hint { font-size: 12px; color: var(--muted); font-weight: 400; }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.field-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.field-grid label.full { grid-column: 1 / -1; }
+.field-grid input, .field-grid textarea, .field-grid select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; color: #1f2937; }
+.field-grid textarea { min-height: 60px; resize: vertical; }
+.stage-values { margin: 6px 0 0; padding: 0; list-style: none; font-size: 13px; }
+.stage-values li { display: flex; gap: 8px; padding: 2px 0; }
+.stage-values .k { color: var(--muted); min-width: 84px; }
+.history-block { margin-top: 14px; border-top: 1px dashed var(--border); padding-top: 10px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.danger { border-color: #f4c4c4; color: #b42318; }

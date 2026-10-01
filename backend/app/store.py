@@ -7,6 +7,31 @@ from __future__ import annotations
 from typing import Any
 
 from app.seed import SEED_ROWS
+from app.services import elevator_rules
+
+# 模块 key 到看板中文名的对照，避免看板直接把英文模块名展示给用户。
+MODULE_LABELS = {
+    "register": "使用登记",
+    "boiler": "锅炉管理",
+    "pressurevessel": "压力容器",
+    "pipeline": "压力管道",
+    "elevator": "电梯管理",
+    "crane": "起重机械",
+    "forklift": "场车管理",
+    "inspection": "定期检验",
+    "maintenance": "维保记录",
+    "hazard": "隐患排查",
+    "accident": "事故管理",
+    "operator": "作业人员",
+    "training": "培训考核",
+    "safetyvalve": "安全阀校验",
+    "gauge": "压力表检定",
+    "sparepart": "备件管理",
+    "emergency": "应急演练",
+    "energyeff": "能效监测",
+    "archive": "档案管理",
+    "contract": "维保合同",
+}
 
 
 class Store:
@@ -31,11 +56,24 @@ class Store:
         modules: list[dict[str, object]] = []
         for name in self.module_names():
             rows = self.rows(name)
+            if name == "elevator":
+                # 电梯的待处置跟着困人救援走：只要有进行中的救援就算待处置、算异常，
+                # 复核收口后自动清零，不再读种子数据里随手写的 pending/abnormal。
+                pending = sum(1 for row in rows if elevator_rules.active_rescue(row) is not None)
+                abnormal = sum(
+                    1
+                    for row in rows
+                    if elevator_rules.active_rescue(row) is not None or elevator_rules.missing_info(row)
+                )
+            else:
+                pending = sum(1 for row in rows if row.get("pending"))
+                abnormal = sum(1 for row in rows if row.get("abnormal"))
             modules.append({
                 "name": name,
+                "label": MODULE_LABELS.get(name, name),
                 "created": len(rows),
-                "pending": sum(1 for row in rows if row.get("pending")),
-                "abnormal": sum(1 for row in rows if row.get("abnormal")),
+                "pending": pending,
+                "abnormal": abnormal,
             })
         cards = [
             {"label": "业务模块", "value": len(modules)},
