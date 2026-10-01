@@ -18,6 +18,14 @@
       </article>
     </div>
 
+    <section v-if="rescuePendingIds.length" class="rescue-banner">
+      困人救援待处置 {{ rescuePendingIds.length }} 台（
+      待到场 {{ stageCount('到场') }} ·
+      待解困 {{ stageCount('解困') }} ·
+      待复核 {{ stageCount('复核') }}），
+      电梯编号：{{ rescuePendingIds.join('、') }}。请到「电梯管理 - 详情/救援」继续分段处置。
+    </section>
+
     <form class="filter-bar" @submit.prevent="reload">
       <label v-for="field in filterFields" :key="field" class="filter-item">
         <span>{{ field }}</span>
@@ -63,23 +71,60 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import { request } from '@/api/client'
 
 type Row = Record<string, string | number | null>
+type PendingElevator = { id: number; 电梯编号: string; 当前段: string; 困人状态: string }
+type RescueBoard = {
+  待处置台数: number
+  待处置电梯: PendingElevator[]
+  分段台数: Record<string, number>
+  资料待补台数: number
+}
 
 const ENDPOINT = '/api/maintenance'
 const columns = ["维保编号", "维保设备", "维保单位", "维保内容", "维保日期", "维保人员", "更换部件", "维保状态"]
 const actions = ["安排维保", "开始维保", "返工登记"]
 const statuses = ["待维保", "维保中", "已完成", "需返工"]
-const stats = [{"label": "待维保设备", "value": 0}, {"label": "维保中设备", "value": 0}, {"label": "需返工设备", "value": 0}]
 
 const rows = ref<Row[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+
+// 维保看板：待处置台数直接取电梯困人救援看板，随到场/解困/复核推进实时变化。
+const board = ref<RescueBoard>({
+  待处置台数: 0,
+  待处置电梯: [],
+  分段台数: {},
+  资料待补台数: 0,
+})
+
+const stats = computed(() => [
+  { label: '待维保设备', value: rows.value.filter((row) => row.status === '待维保').length },
+  { label: '维保中设备', value: rows.value.filter((row) => row.status === '维保中').length },
+  { label: '困人救援待处置（台）', value: board.value.待处置台数 },
+  { label: '电梯资料待补（台）', value: board.value.资料待补台数 },
+])
+const rescuePendingIds = computed(() => board.value.待处置电梯.map((item) => item.电梯编号))
+
+function stageCount(stage: string): number {
+  return board.value.分段台数[stage] ?? 0
+}
+
+async function loadRescueBoard() {
+  try {
+    const response = await request('/api/elevator/rescue/board')
+    if (response.ok) {
+      board.value = await response.json()
+    }
+  } catch {
+    // 救援看板暂时读不出来不影响维保记录列表
+  }
+}
 
 function resetFilters() {
   filters.value = {}
@@ -99,10 +144,11 @@ async function runAction(action: string, row: Row) {
   try {
     const response = await request(`${ENDPOINT}/${row.id}/actions`, {
       method: 'POST',
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ values: { action } }),
     })
-    if (!response.ok) {
-      throw new Error('维保记录动作未生效，请稍后重试')
+    const payload = (await response.json()) as { ok: boolean; message: string }
+    if (!response.ok || !payload.ok) {
+      throw new Error(payload.message || '维保记录动作未生效，请稍后重试')
     }
     await reload()
   } catch (error) {
@@ -121,6 +167,7 @@ async function reload() {
     const payload = await response.json()
     rows.value = payload.items ?? []
     total.value = payload.total ?? rows.value.length
+    await loadRescueBoard()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '维保记录列表读取失败'
   }
@@ -128,3 +175,15 @@ async function reload() {
 
 onMounted(reload)
 </script>
+
+<style scoped>
+.rescue-banner {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+</style>
